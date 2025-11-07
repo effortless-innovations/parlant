@@ -223,7 +223,7 @@ async def configure_container(container: p.Container) -> p.Container:
 async def main() -> None:
     load_dotenv()
     async with p.Server(
-        nlp_service=p.NLPServices.glm,
+        nlp_service=p.NLPServices.qwen,
         configure_container=configure_container,
     ) as server:
         agent = await server.create_agent(
