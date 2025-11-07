@@ -143,11 +143,11 @@ class QwenTextEmbedding_V4(QwenEmbedder):
     @property
     @override
     def max_tokens(self) -> int:
-        return 8192
+        return 1000 * 1000 * 1000
 
     @property
     def dimensions(self) -> int:
-        return 1024
+        return 2048
 
 
 class QwenSchematicGenerator(BaseSchematicGenerator[T]):
