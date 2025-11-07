@@ -287,6 +287,27 @@ class GLM_4_5(GLMSchematicGenerator[T]):
     def max_tokens(self) -> int:
         return 96 * 1024
 
+# GLM-4-Air-250414 为基座语言模型。该模型能快速执行复杂任务，在工具调用、联网搜索、代码等智能体任务上的能力得到大大加强
+# 0.5 元 / 百万 Tokens,上下文窗口 128K, 最大输出Tokens 16K, 并发限制 30
+class GLM_4_AIR(GLMSchematicGenerator[T]):
+    def __init__(self, logger: Logger, meter: Meter) -> None:
+        super().__init__(model_name="glm-4-air-250414", logger=logger, meter=meter)
+
+    @property
+    @override
+    def max_tokens(self) -> int:
+        return 128 * 1024
+
+# GLM-4-FlashX-250414 具有超快推理速度、更强并发保障和极致性价比，在实时网页检索、长上下文处理、多语言支持等方面表现出色
+# 0.1 元 / 百万 Tokens,上下文窗口 128K, 最大输出Tokens 16K，并发限制 100
+class GLM_4_FLASHX(GLMSchematicGenerator[T]):
+    def __init__(self, logger: Logger, meter: Meter) -> None:
+        super().__init__(model_name="glm-4-flashx-250414", logger=logger, meter=meter)
+
+    @property
+    @override
+    def max_tokens(self) -> int:
+        return 128 * 1024
 
 class GLMService(NLPService):
     @staticmethod
