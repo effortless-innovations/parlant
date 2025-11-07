@@ -85,7 +85,7 @@ class QwenEmbedder(BaseEmbedder):
 
         self._client = AsyncClient(
             base_url=os.environ.get(
-                "BASE_URL", "https://dashscope-intl.aliyuncs.com/compatible-mode/v1"
+                "BASE_URL", "https://dashscope.aliyuncs.com/compatible-mode/v1"
             ),
             api_key=os.environ.get("DASHSCOPE_API_KEY", ""),
         )
@@ -165,7 +165,7 @@ class QwenSchematicGenerator(BaseSchematicGenerator[T]):
 
         self._client = AsyncClient(
             base_url=os.environ.get(
-                "BASE_URL", "https://dashscope-intl.aliyuncs.com/compatible-mode/v1"
+                "BASE_URL", "https://dashscope.aliyuncs.com/compatible-mode/v1"
             ),
             api_key=os.environ["DASHSCOPE_API_KEY"],
         )
@@ -181,6 +181,12 @@ class QwenSchematicGenerator(BaseSchematicGenerator[T]):
     @override
     def tokenizer(self) -> QwenEstimatingTokenizer:
         return self._tokenizer
+
+    @property
+    @override
+    def max_tokens(self) -> int:
+        # 默认使用 100K token 限制，适用于大多数 Qwen 模型
+        return 100 * 1000
 
     @policy(
         [
@@ -232,6 +238,10 @@ class QwenSchematicGenerator(BaseSchematicGenerator[T]):
 
         try:
             json_content = json.loads(normalize_json_output(raw_content))
+            print("=" * 80)
+            print(f"[LLM REQUEST] Prompt: {prompt[:250]}...")
+            print(f"[LLM RESPONSE] JSON: {json_content}")
+            print("=" * 80)
         except json.JSONDecodeError:
             self._logger.warning(f"Invalid JSON returned by {self.model_name}:\n{raw_content})")
             json_content = jsonfinder.only_json(raw_content)[2]
@@ -277,37 +287,6 @@ class QwenSchematicGenerator(BaseSchematicGenerator[T]):
             )
             raise
 
-
-class Qwen_MAX(QwenSchematicGenerator[T]):
-    def __init__(self, logger: Logger, meter: Meter) -> None:
-        super().__init__(model_name="qwen-max", logger=logger, meter=meter)
-
-    @property
-    @override
-    def max_tokens(self) -> int:
-        return 32 * 1024
-
-
-class Qwen_Plus(QwenSchematicGenerator[T]):
-    def __init__(self, logger: Logger, meter: Meter) -> None:
-        super().__init__(model_name="qwen-plus", logger=logger, meter=meter)
-
-    @property
-    @override
-    def max_tokens(self) -> int:
-        return 128 * 1024
-
-
-class Qwen_2_5_72b(QwenSchematicGenerator[T]):
-    def __init__(self, logger: Logger, meter: Meter) -> None:
-        super().__init__(model_name="qwen2.5-72b-instruct", logger=logger, meter=meter)
-
-    @property
-    @override
-    def max_tokens(self) -> int:
-        return 128 * 1024
-
-
 class QwenService(NLPService):
     @staticmethod
     def verify_environment() -> str | None:
@@ -332,30 +311,13 @@ Please set DASHSCOPE_API_KEY in your environment before running Parlant.
 
         self._logger.info(f"Initialized QwenService with model: {self.model_name}")
 
-    def _get_specialized_generator_class(
-        self,
-        model_name: str,
-        t: type[T],
-    ) -> Callable[..., QwenSchematicGenerator[T]] | None:
-        """
-        Returns the specialized generator class for known models
-        """
-        model_mapping: dict[str, type[QwenSchematicGenerator[T]]] = {
-            "qwen-max": Qwen_MAX[t],  # type: ignore
-            "qwen-plus": Qwen_Plus[t],  # type: ignore
-            "qwen2.5-72b-instruct": Qwen_2_5_72b[t],  # type: ignore
-        }
-
-        if generator_class := model_mapping.get(model_name):
-            return generator_class
-        else:
-            return None
-
     @override
     async def get_schematic_generator(self, t: type[T]) -> QwenSchematicGenerator[T]:
-        qwen_generator = self._get_specialized_generator_class(self.model_name, t)
-        assert qwen_generator is not None, f"Unsupported Qwen model: {self.model_name}"
-        return qwen_generator(self._logger, self._meter)
+        return QwenSchematicGenerator[t](  # type: ignore
+            model_name=self.model_name,
+            logger=self._logger,
+            meter=self._meter,
+        )
 
     @override
     async def get_embedder(self) -> Embedder:

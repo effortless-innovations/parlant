@@ -147,6 +147,11 @@ class DeepSeekSchematicGenerator(BaseSchematicGenerator[T]):
 
         try:
             json_content = json.loads(normalize_json_output(raw_content))
+
+            print("=" * 80)
+            print(f"[LLM REQUEST] Prompt: {prompt[:250]}...")
+            print(f"[LLM RESPONSE] JSON: {json_content}")
+            print("=" * 80)
         except json.JSONDecodeError:
             self._logger.warning(f"Invalid JSON returned by {self.model_name}:\n{raw_content})")
             json_content = jsonfinder.only_json(raw_content)[2]
