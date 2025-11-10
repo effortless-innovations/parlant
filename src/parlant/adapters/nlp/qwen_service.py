@@ -147,7 +147,7 @@ class QwenTextEmbedding_V4(QwenEmbedder):
 
     @property
     def dimensions(self) -> int:
-        return 2048
+        return 1024
 
 
 class QwenSchematicGenerator(BaseSchematicGenerator[T]):
@@ -239,7 +239,7 @@ class QwenSchematicGenerator(BaseSchematicGenerator[T]):
         try:
             json_content = json.loads(normalize_json_output(raw_content))
             print("=" * 80)
-            print(f"[LLM REQUEST] Prompt: {prompt[:250]}...")
+            print(f"[LLM REQUEST] Prompt: {prompt}...")
             print(f"[LLM RESPONSE] JSON: {json_content}")
             print("=" * 80)
         except json.JSONDecodeError:
